@@ -1,4 +1,5 @@
 const db = require('../config/db')
+const bcrypt = require('bcrypt')
 
 //get all users
 const getAllUsers = async (req, res) => {
@@ -58,13 +59,22 @@ const getUsersById = async (req, res) => {
 const addUser = async (req, res) => {
     try {
         const { firstName, lastName, email, password, gender, hobbies, departmentId } = req.body
+
         if (!firstName || !lastName || !email || !password || !gender || !hobbies || !departmentId) {
             return res.status(500).send({
                 message: 'add all fields'
             })
         }
 
-        const data = await db.query(`INSERT INTO userdata (firstName,lastName,email,password,gender,hobbies,departmentId) VALUES (?,?,?,?,?,?,?)`, [firstName, lastName, email, password, gender, hobbies, departmentId])
+        //check for existing email in databse
+        const [existingEmail] = await db.query('SELECT * FROM userdata WHERE email = ?', [email]);
+        if (existingEmail.length > 0) {
+            return res.status(409).send({ message: 'Email already exists' });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10)
+
+        const data = await db.query(`INSERT INTO userdata (firstName,lastName,email,password,gender,hobbies,departmentId) VALUES (?,?,?,?,?,?,?)`, [firstName, lastName, email, hashedPassword, gender, hobbies, departmentId])
 
         if (!data) {
             return res.status(404).send({
@@ -98,8 +108,15 @@ const updateUser = async (req, res) => {
         }
 
         const { firstName, lastName, email, password, gender, hobbies, departmentId } = req.body
+        const hashedPassword = await bcrypt.hash(password, 10)
 
-        const data = db.query("UPDATE userdata SET firstName = ?, lastName = ?, email = ?, password = ?, gender = ?, hobbies = ?, departmentId = ? WHERE id = ?", [firstName, lastName, email, password, gender, hobbies, departmentId, userId])
+        //check for existing email id
+        const [existingEmail] = await db.query('SELECT * FROM userdata WHERE email = ?', [email]);
+        if (existingEmail.length > 0) {
+            return res.status(409).send({ message: 'Email already exists' });
+        }
+
+        const data = db.query("UPDATE userdata SET firstName = ?, lastName = ?, email = ?, password = ?, gender = ?, hobbies = ?, departmentId = ? WHERE id = ?", [firstName, lastName, email, hashedPassword, gender, hobbies, departmentId, userId])
 
         if (!data) {
             return res.status(500).send({
