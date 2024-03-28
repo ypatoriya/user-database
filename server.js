@@ -1,11 +1,14 @@
 const express = require('express');
 const app = express();
 const morgan = require('morgan');
+const fileUpload = require('express-fileupload')
+const path = require('path')
 
 
 //environment
 const dotenv = require('dotenv');
 const mysqlpool = require('./config/db');
+const { uploadFile } = require('./controllers/userController');
 dotenv.config();
 
 const PORT = process.env.PORT || 3000;
@@ -14,6 +17,8 @@ const PORT = process.env.PORT || 3000;
 //middleware
 app.use(morgan('dev'))
 app.use(express.json());
+app.use(fileUpload());
+app.use('/public', express.static(path.join(__dirname, './public/')))
 
 
 //route
