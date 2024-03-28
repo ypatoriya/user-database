@@ -3,10 +3,11 @@ const bcrypt = require('bcrypt')
 
 
 //SELECT u.*, d.department_Name FROM userdata u JOIN department d ON u.departmentId = d.id
+
 //get all users
 const getAllUsers = async (req, res) => {
     try {
-        const data = await db.query('SELECT u.*, d.department_name FROM userdata u JOIN department d ON u.departmentId = d.id')
+        const data = await db.query('SELECT * FROM userdata WHERE is_deleted=0')
         if (!data) {
             return res.status(404).send({
                 message: 'no records found'
@@ -149,8 +150,10 @@ const deleteUser = async (req, res) => {
                 message: 'invalid id'
             })
         }
+        //UPDATE pin_status_types SET is_deleted = 1, date_deleted = NOW() WHERE pinstatus_id = '{$delete}
+        //DELETE FROM userdata WHERE id = ?`, [userId]
 
-        await db.query(`DELETE FROM userdata WHERE id = ?`, [userId])
+        await db.query(`UPDATE userdata SET is_deleted = 1 WHERE id = ${userId}`)
         res.send(200).send({
             message: 'deletes user!'
         })
@@ -167,6 +170,7 @@ const deleteUser = async (req, res) => {
 //get all users by department id
 
 const getUsersByDepartmentId = async (req, res) => {
+    
     try {
         const departmentId = req.params.id
         if (!departmentId) {
@@ -175,7 +179,7 @@ const getUsersByDepartmentId = async (req, res) => {
             })
         }
 
-        const data = await db.query(`SELECT * FROM userdata WHERE departmentId=?`, [departmentId])
+        const data = await db.query(`SELECT * FROM userdata WHERE departmentId= ${departmentId}`)
         if (!data) {
             return res.status(404).send({
                 message: 'no record found!'
@@ -195,4 +199,27 @@ const getUsersByDepartmentId = async (req, res) => {
     }
 }
 
-module.exports = { getAllUsers, getUsersById, addUser, updateUser, deleteUser, getUsersByDepartmentId };
+
+const checkLogin = async (req,res) => {
+    try{
+
+        const {email,password} = req.body
+        const [existingEmail] = await db.query('SELECT * FROM userdata WHERE email = ?', [email]);
+
+        if (existingEmail.length > 0 ) {
+            return res.status(409).send({ message: 'login success!' });
+        }
+        res.status(200).send({
+            message: 'email not found! sign up!'
+        })
+
+    }catch(error){
+        console.log(error)
+        res.send({
+            message: 'Error in email check api',
+            error
+        })
+    }
+}
+
+module.exports = { getAllUsers, getUsersById, addUser, updateUser, deleteUser, getUsersByDepartmentId, checkLogin };
