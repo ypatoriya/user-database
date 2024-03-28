@@ -1,10 +1,12 @@
 const db = require('../config/db')
 const bcrypt = require('bcrypt')
 
+
+//SELECT u.*, d.department_Name FROM userdata u JOIN department d ON u.departmentId = d.id
 //get all users
 const getAllUsers = async (req, res) => {
     try {
-        const data = await db.query('SELECT u.*, d.department_Name FROM userdata u JOIN department d ON u.departmentId = d.id')
+        const data = await db.query('SELECT u.*, d.department_name FROM userdata u JOIN department d ON u.departmentId = d.id')
         if (!data) {
             return res.status(404).send({
                 message: 'no records found'
@@ -162,4 +164,35 @@ const deleteUser = async (req, res) => {
 
 }
 
-module.exports = { getAllUsers, getUsersById, addUser, updateUser, deleteUser };
+//get all users by department id
+
+const getUsersByDepartmentId = async (req, res) => {
+    try {
+        const departmentId = req.params.id
+        if (!departmentId) {
+            return res.status(404).send({
+                message: 'invalid id!'
+            })
+        }
+
+        const data = await db.query(`SELECT * FROM userdata WHERE departmentId=?`, [departmentId])
+        if (!data) {
+            return res.status(404).send({
+                message: 'no record found!'
+            })
+        }
+        res.status(200).send({
+            userdata: data[0]
+        })
+    }
+    catch (error) {
+        console.log(error)
+        res.send({
+            message: 'Error in dept ID api',
+            error
+        })
+
+    }
+}
+
+module.exports = { getAllUsers, getUsersById, addUser, updateUser, deleteUser, getUsersByDepartmentId };
