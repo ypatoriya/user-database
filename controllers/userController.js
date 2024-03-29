@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const { verifyToken } = require('../middleware/auth');
 const path = require('path');
 const { error } = require('console');
-
+const fs = require('fs')
 
 const generateToken = (userData) => {
     return jwt.sign({ id: userData.id, email: userData.email }, 'crud', { expiresIn: '1h' });
@@ -251,6 +251,12 @@ const uploadFile = async (req, res) => {
         if(image.length>1){
             throw new error('multiple file not allowed!')
         }
+
+        const dirExists = fs.existsSync('public/assets');
+        if (!dirExists) {
+            fs.mkdirSync('public/assets', { recursive: true });
+        }
+
         if (image == undefined || image == null) throw new Error("file not found!");
        // let savePath = `/public/assets/${Date.now()}.${image.name.split(".").pop()}`
        let savePath = `/public/assets/${Date.now()}.${image.name.split(".").pop()}`
