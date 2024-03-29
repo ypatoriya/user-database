@@ -7,7 +7,7 @@ const { error } = require('console');
 
 
 const generateToken = (userData) => {
-    return jwt.sign({ id: userData.id, email: userData.email }, 'crud', { expiresIn: '24h' });
+    return jwt.sign({ id: userData.id, email: userData.email }, 'crud', { expiresIn: '1h' });
 };
 
 
@@ -219,6 +219,7 @@ const checkLogin = async (req, res) => {
 
         if (existingUser.length > 0) {
             const user = existingUser[0];
+
             // Compare password
             const passwordMatch = await bcrypt.compare(password, user.password);
 
@@ -248,10 +249,11 @@ const uploadFile = async (req, res) => {
 
         let image = req.files.image //key and auth
         if(image.length>1){
-            throw new error('multiple file not allowed')
+            throw new error('multiple file not allowed!')
         }
-        if (image == undefined || image == null) throw new Error("file note found");
-        let savePath = `/public/assets/${Date.now()}.${image.name.split(".").pop()}`
+        if (image == undefined || image == null) throw new Error("file not found!");
+       // let savePath = `/public/assets/${Date.now()}.${image.name.split(".").pop()}`
+       let savePath = `/public/assets/${Date.now()}.${image.name.split(".").pop()}`
         image.mv(path.join(__dirname, ".." + savePath), async (err) => {
             if (err) throw new Error("error in uploading")
             else {
@@ -262,6 +264,10 @@ const uploadFile = async (req, res) => {
                 })
             }
         });
+
+
+
+
 
         // Get user ID from JWT token 
         // const userId = req.body.userId; 
